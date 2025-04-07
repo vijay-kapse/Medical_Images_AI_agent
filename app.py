@@ -186,3 +186,26 @@ if uploaded_file is not None:
 else:
     st.warning("⚠️ Please upload a medical image to begin analysis.")
 
+
+# -------------------------------------------------------------------
+# Preloaded Test Images for Quick Demo
+# -------------------------------------------------------------------
+st.sidebar.markdown("### 🧪 Try with Test Images")
+
+col1, col2 = st.sidebar.columns(2)
+if col1.button("Test Image 1"):
+    test_image_path = "test_images/test1.png"
+    st.image(test_image_path, caption="🖼️ Test Image 1", use_column_width=True)
+    with st.spinner("🔍 Running analysis on Test Image 1..."):
+        report = analyze_medical_image(test_image_path)
+        st.subheader("📋 Analysis Report")
+        st.markdown(report, unsafe_allow_html=True)
+
+if col2.button("Test Image 2"):
+    test_image_path = "test_images/test2.png"
+    st.image(test_image_path, caption="🖼️ Test Image 2", use_column_width=True)
+    with st.spinner("🔍 Running analysis on Test Image 2..."):
+        report = analyze_medical_image(test_image_path)
+        st.subheader("📋 Analysis Report")
+        st.markdown(report, unsafe_allow_html=True)
+
