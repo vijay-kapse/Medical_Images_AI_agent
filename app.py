@@ -6,23 +6,27 @@ from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.media import Image as AgnoImage
 import streamlit as st
 
-# Set your API Key (Replace with your actual key)
+# -------------------------------------------------------------------
+# Environment Setup
+# -------------------------------------------------------------------
+# Retrieve API key from environment variables; set error if not provided.
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
-os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-
-# Ensure API Key is provided
 if not GOOGLE_API_KEY:
     raise ValueError("⚠️ Please set your Google API Key in GOOGLE_API_KEY")
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
-# Initialize the Medical Agent
+# -------------------------------------------------------------------
+# Initialize Medical Agent
+# -------------------------------------------------------------------
 medical_agent = Agent(
     model=Gemini(id="gemini-2.0-flash-exp"),
     tools=[DuckDuckGoTools()],
     markdown=True
 )
 
-# Medical Analysis Query
+# -------------------------------------------------------------------
+# Define the Analysis Query
+# -------------------------------------------------------------------
 query = """
 You are a highly skilled medical imaging expert with extensive knowledge in radiology and diagnostic imaging. Analyze the medical image and structure your response as follows:
 
@@ -55,70 +59,119 @@ You are a highly skilled medical imaging expert with extensive knowledge in radi
 Ensure a structured and medically accurate response using clear markdown formatting.
 """
 
-# Function to analyze medical image
+# -------------------------------------------------------------------
+# Function: Analyze Medical Image
+# -------------------------------------------------------------------
 def analyze_medical_image(image_path):
-    """Processes and analyzes a medical image using AI."""
-    
-    # Open and resize image
-    image = PILImage.open(image_path)
-    width, height = image.size
-    aspect_ratio = width / height
-    new_width = 500
-    new_height = int(new_width / aspect_ratio)
-    resized_image = image.resize((new_width, new_height))
-
-    # Save resized image
-    temp_path = "temp_resized_image.png"
-    resized_image.save(temp_path)
-
-    # Create AgnoImage object
-    agno_image = AgnoImage(filepath=temp_path)
-
-    # Run AI analysis
+    """
+    Processes and analyzes a medical image using AI.
+    Resizes the image for optimal performance, creates an AgnoImage object,
+    and returns the AI-generated report.
+    """
     try:
+        # Open and resize image
+        image = PILImage.open(image_path)
+        width, height = image.size
+        aspect_ratio = width / height
+        new_width = 500
+        new_height = int(new_width / aspect_ratio)
+        resized_image = image.resize((new_width, new_height))
+
+        # Save resized image temporarily
+        temp_path = "temp_resized_image.png"
+        resized_image.save(temp_path)
+
+        # Create AgnoImage and run analysis
+        agno_image = AgnoImage(filepath=temp_path)
         response = medical_agent.run(query, images=[agno_image])
         return response.content
+
     except Exception as e:
         return f"⚠️ Analysis error: {e}"
     finally:
-        # Clean up temporary file
-        os.remove(temp_path)
+        # Ensure temporary file is removed
+        if os.path.exists("temp_resized_image.png"):
+            os.remove("temp_resized_image.png")
 
-# Streamlit UI setup
+# -------------------------------------------------------------------
+# Streamlit UI Setup
+# -------------------------------------------------------------------
 st.set_page_config(page_title="Medical Image Analysis", layout="centered")
+
+# Custom CSS for enhanced appearance
+st.markdown(
+    """
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+        }
+        /* Main container styling */
+        .css-18e3th9 {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        /* Sidebar styling */
+        .css-1d391kg {
+            background-color: #e9ecef;
+        }
+        /* Button styling */
+        div.stButton > button {
+            background-color: #0275d8;
+            color: white;
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            border: none;
+        }
+    </style>
+    """, unsafe_allow_html=True
+)
+
+# Header and introduction
 st.title("🩺 Medical Image Analysis Tool 🔬")
 st.markdown(
     """
-    Welcome to the **Medical Image Analysis** tool! 📸
-    Upload a medical image (X-ray, MRI, CT, Ultrasound, etc.), and our AI-powered system will analyze it, providing detailed findings, diagnosis, and research insights.
-    Let's get started!
-    """
+    Welcome to the **Medical Image Analysis** tool!<br>
+    Upload a medical image (X-ray, MRI, CT, Ultrasound, etc.) below and our AI-powered system will provide you with an in-depth analysis including key findings, diagnostic insights, and relevant research context.
+    """,
+    unsafe_allow_html=True
 )
 
-# Upload image section
-st.sidebar.header("Upload Your Medical Image:")
-uploaded_file = st.sidebar.file_uploader("Choose a medical image file", type=["jpg", "jpeg", "png", "bmp", "gif"])
+# Sidebar: File upload and instructions
+st.sidebar.header("Upload Your Medical Image")
+st.sidebar.markdown(
+    """
+    **Instructions:**
+    - Upload an image file in JPG, JPEG, PNG, BMP, or GIF format.
+    - Click the **Analyze Image** button to begin.
+    """
+)
+uploaded_file = st.sidebar.file_uploader("", type=["jpg", "jpeg", "png", "bmp", "gif"])
 
-# Button to trigger analysis
+# Main content: Image display and analysis results
 if uploaded_file is not None:
-    # Display the uploaded image in Streamlit
-    st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
-    
+    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+
     if st.sidebar.button("Analyze Image"):
         with st.spinner("🔍 Analyzing the image... Please wait."):
-            # Save the uploaded image to a temporary file
-            image_path = f"temp_image.{uploaded_file.type.split('/')[1]}"
+            # Save the uploaded image temporarily
+            file_extension = uploaded_file.type.split('/')[-1]
+            image_path = f"temp_image.{file_extension}"
             with open(image_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            
-            # Run analysis on the uploaded image
+
+            # Get AI analysis report
             report = analyze_medical_image(image_path)
             
-            # Display the report
+            # Display analysis report with clear header
             st.subheader("📋 Analysis Report")
             st.markdown(report, unsafe_allow_html=True)
-            
-            # Clean up the saved image file
-            os.remove(image_path)
+
+            # Remove temporary image file
+            if os.path.exists(image_path):
+                os.remove(image_path)
 else:
     st.warning("⚠️ Please upload a medical image to begin analysis.")
