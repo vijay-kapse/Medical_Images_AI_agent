@@ -6,15 +6,9 @@ from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.media import Image as AgnoImage
 import streamlit as st
 
-
-# For Streamlit Cloud deployment
-import streamlit as st
-
-# Access secrets if running in Streamlit Cloud
-if "GOOGLE_API_KEY" in st.secrets:
-    GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
-else:
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# Set your API Key (Replace with your actual key)
+GOOGLE_API_KEY = "AIzaSyCr35hxFrpVsbNWgqOwU6PwmkpwLmO2dJA"
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
 # Ensure API Key is provided
 if not GOOGLE_API_KEY:
