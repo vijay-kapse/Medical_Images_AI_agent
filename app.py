@@ -59,24 +59,18 @@ Ensure a structured and medically accurate response using clear markdown formatt
 """
 
 # -------------------------------------------------------------------
-# Function: Analyze Medical Image
+# Analyze Image Function
 # -------------------------------------------------------------------
 def analyze_medical_image(image_path):
     try:
         image = PILImage.open(image_path)
-        width, height = image.size
-        aspect_ratio = width / height
-        new_width = 500
-        new_height = int(new_width / aspect_ratio)
-        resized_image = image.resize((new_width, new_height))
-
+        aspect_ratio = image.width / image.height
+        resized_image = image.resize((500, int(500 / aspect_ratio)))
         temp_path = "temp_resized_image.png"
         resized_image.save(temp_path)
-
         agno_image = AgnoImage(filepath=temp_path)
         response = medical_agent.run(query, images=[agno_image])
         return response.content
-
     except Exception as e:
         return f"⚠️ Analysis error: {e}"
     finally:
@@ -84,30 +78,25 @@ def analyze_medical_image(image_path):
             os.remove("temp_resized_image.png")
 
 # -------------------------------------------------------------------
-# Extract Summary from Report
+# Summary Extractor
 # -------------------------------------------------------------------
 def extract_summary(report):
     try:
         sections = report.split("###")
         for section in sections:
             if "Diagnostic Assessment" in section:
-                lines = section.strip().split("\n")
-                for line in lines:
-                    line = line.strip()
-                    if line and not line.startswith("-"):
-                        return line
+                for line in section.strip().splitlines():
+                    if line.strip().lower().startswith("primary diagnosis:"):
+                        return line.replace("Primary Diagnosis:", "").strip()
     except Exception:
         pass
-    return "AI-powered medical image analysis completed."
+    return "Medical condition detected; further review recommended."
 
 # -------------------------------------------------------------------
-# Streamlit UI Setup
+# UI Setup
 # -------------------------------------------------------------------
 st.set_page_config(page_title="Medical Image Analysis", layout="centered")
 
-# -------------------------------------------------------------------
-# Custom CSS
-# -------------------------------------------------------------------
 st.markdown("""
     <style>
         html, body, [class*="css"] {
@@ -151,7 +140,6 @@ st.markdown("""
             border-radius: 10px;
         }
 
-        section[data-testid="stSidebar"] button.css-1cpxqw2,
         section[data-testid="stSidebar"] button {
             color: white !important;
             background-color: #045d75 !important;
@@ -169,16 +157,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# App Title and Introduction
+# Title
 # -------------------------------------------------------------------
 st.title("🩺 Medical Image Analysis Tool 🔬")
 st.markdown("""
-Welcome to the **Medical Image Analysis** tool powered by AI.<br>
 Upload a medical image (X-ray, MRI, CT, Ultrasound, etc.) and receive a structured, detailed diagnostic report with insights, potential findings, and references to medical research.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# Sidebar Upload Section
+# Sidebar
 # -------------------------------------------------------------------
 st.sidebar.header("📤 Upload Medical Image")
 st.sidebar.markdown("""
@@ -191,35 +178,49 @@ st.sidebar.markdown("""
 uploaded_file = st.sidebar.file_uploader("", type=["jpg", "jpeg", "png", "bmp", "gif"])
 
 # -------------------------------------------------------------------
-# Process Upload and Display Results
+# Handle Analysis + Display
 # -------------------------------------------------------------------
 def handle_image(image_path, caption="Uploaded Image"):
-    st.image(image_path, caption=f"🖼️ {caption}", use_column_width=True)
     with st.spinner("🔍 Running analysis..."):
         report = analyze_medical_image(image_path)
         summary = extract_summary(report)
-        st.subheader("📋 Analysis Report")
-        st.markdown(f"**🩺 Summary:** {summary}\n", unsafe_allow_html=True)
-        st.markdown(report, unsafe_allow_html=True)
 
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            st.image(image_path, caption=f"🖼️ {caption}", use_column_width=True)
+
+        with col2:
+            st.subheader("📋 Report")
+            st.markdown(
+                f"<div style='font-size: 1.1rem; padding: 0.5rem; background-color: #f0f8ff; border-left: 4px solid #0073b1; margin-bottom: 1rem;'><strong>🩺 Summary:</strong> {summary}</div>",
+                unsafe_allow_html=True
+            )
+            st.markdown(report, unsafe_allow_html=True)
+
+# -------------------------------------------------------------------
+# Main Upload Logic
+# -------------------------------------------------------------------
 if uploaded_file is not None:
     file_extension = uploaded_file.type.split('/')[-1]
     image_path = f"temp_image.{file_extension}"
     with open(image_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     handle_image(image_path)
-    os.remove(image_path)
+    if os.path.exists(image_path):
+        os.remove(image_path)
 else:
     st.warning("⚠️ Please upload a medical image to begin analysis.")
 
 # -------------------------------------------------------------------
-# Preloaded Test Images
+# Test Images Section
 # -------------------------------------------------------------------
 st.sidebar.markdown("### 🧪 Try with Test Images")
-
 col1, col2 = st.sidebar.columns(2)
+
 if col1.button("Test Image 1"):
-    handle_image("test_images/test1.png", caption="Test Image 1")
+    test_image_path = "test_images/test1.png"
+    handle_image(test_image_path, caption="Test Image 1")
 
 if col2.button("Test Image 2"):
-    handle_image("test_images/test2.png", caption="Test Image 2")
+    test_image_path = "test_images/test2.png"
+    handle_image(test_image_path, caption="Test Image 2")
