@@ -139,6 +139,27 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
+
+st.markdown("""
+    <style>
+        /* Style sidebar buttons */
+        div[data-testid="stSidebar"] button {
+            color: white !important;
+            background-color: #045d75 !important;
+            border: none !important;
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+        }
+
+        div[data-testid="stSidebar"] button:hover {
+            background-color: #033d52 !important;
+            transition: 0.2s ease-in-out;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
 # -------------------------------------------------------------------
 # App Title and Introduction
 # -------------------------------------------------------------------
@@ -210,20 +231,3 @@ if col2.button("Test Image 2"):
         st.markdown(report, unsafe_allow_html=True)
 
 
-st.markdown("""
-    <style>
-        /* Style sidebar buttons */
-        div[data-testid="stSidebar"] button {
-            color: white !important;
-            background-color: #045d75 !important;
-            border: none !important;
-            border-radius: 5px;
-            padding: 0.5rem 1rem;
-        }
-
-        div[data-testid="stSidebar"] button:hover {
-            background-color: #033d52 !important;
-            transition: 0.2s ease-in-out;
-        }
-    </style>
-""", unsafe_allow_html=True)
