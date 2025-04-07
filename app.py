@@ -6,6 +6,10 @@ from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.media import Image as AgnoImage
 import streamlit as st
 
+# Load environment variables from .env file
+load_dotenv()
+
+
 # Set your API Key (Replace with your actual key)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
