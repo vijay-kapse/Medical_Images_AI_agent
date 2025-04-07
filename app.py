@@ -238,3 +238,15 @@ if col1.button("Test Image 1"):
 if col2.button("Test Image 2"):
     test_image_path = "test_images/test2.png"
     handle_image(test_image_path, caption="Test Image 2")
+
+
+# -------------------------------------------------------------------
+# Footer
+# -------------------------------------------------------------------
+st.markdown("""
+<hr style="margin-top: 2rem; margin-bottom: 1rem;">
+
+<div style='text-align: center; font-size: 0.9rem; color: #555;'>
+    Made with ❤️ by <a href="https://www.linkedin.com/in/vijay-kapse/" target="_blank" style="color: #045d75; text-decoration: none; font-weight: 600;">Vijay Suryakant Kapse</a>
+</div>
+""", unsafe_allow_html=True)
