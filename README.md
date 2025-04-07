@@ -3,6 +3,10 @@
 [![Streamlit App](https://img.shields.io/badge/Launch%20App-%F0%9F%9A%80%20Try%20Now!-brightgreen?style=for-the-badge)](https://aidoctoragent.streamlit.app/)
 
 ---
+### ⚙️ Preview
+
+![image](https://github.com/user-attachments/assets/bcfac156-39fe-4148-9975-a6b90c5b8278)
+
 
 ### 📌 What is this?
 
