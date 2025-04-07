@@ -7,16 +7,35 @@ from agno.media import Image as AgnoImage
 import streamlit as st
 
 # Load API Key securely from environment variables
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+#GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = "AIzaSyD339SNnqvBhRpxCWL9Ln5WVcOQzQptufY"
 if not GOOGLE_API_KEY:
     raise ValueError("⚠️ Missing Google API Key. Set it as an environment variable.")
 
-# Initialize the AI agent
-medical_agent = Agent(
-    model=Gemini(id="gemini-2.0-flash-exp"),
-    tools=[DuckDuckGoTools()],
-    markdown=True,
-)
+
+from google import genai
+
+# Initialize the client correctly
+try:
+    client = genai.Client(api_key=GOOGLE_API_KEY)
+    medical_agent = Agent(
+        model=Gemini(id="gemini-2.0-flash-exp"),
+        tools=[DuckDuckGoTools()],
+        markdown=True
+    )
+except Exception as e:
+    st.error(f"⚠️ Failed to initialize Gemini API: {e}")
+    st.stop()
+
+
+
+
+# # Initialize the AI agent
+# medical_agent = Agent(
+#     model=Gemini(id="gemini-2.0-flash-exp"),
+#     tools=[DuckDuckGoTools()],
+#     markdown=True,
+# )
 
 # Prompt for medical image analysis
 ANALYSIS_PROMPT = """
