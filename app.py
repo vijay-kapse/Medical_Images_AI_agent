@@ -82,15 +82,23 @@ def analyze_medical_image(image_path):
 # -------------------------------------------------------------------
 def extract_summary(report):
     try:
-        sections = report.split("###")
-        for section in sections:
-            if "Diagnostic Assessment" in section:
-                for line in section.strip().splitlines():
-                    if line.strip().lower().startswith("primary diagnosis:"):
-                        return line.replace("Primary Diagnosis:", "").strip()
+        # Look for section heading
+        if "### 3. Diagnostic Assessment" in report:
+            section = report.split("### 3. Diagnostic Assessment")[1]
+        else:
+            section = report
+
+        # Search for 'Primary Diagnosis'
+        for line in section.strip().splitlines():
+            line_lower = line.strip().lower()
+            if line_lower.startswith("primary diagnosis"):
+                # Remove markdown styling and return just the diagnosis
+                return line.split(":", 1)[-1].strip()
     except Exception:
         pass
-    return "Medical condition detected; further review recommended."
+
+    return "Diagnosis not confidently detected – needs manual review."
+
 
 # -------------------------------------------------------------------
 # UI Setup
