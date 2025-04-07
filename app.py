@@ -63,7 +63,6 @@ Ensure a structured and medically accurate response using clear markdown formatt
 # -------------------------------------------------------------------
 def analyze_medical_image(image_path):
     try:
-        # Resize image
         image = PILImage.open(image_path)
         width, height = image.size
         aspect_ratio = width / height
@@ -71,11 +70,9 @@ def analyze_medical_image(image_path):
         new_height = int(new_width / aspect_ratio)
         resized_image = image.resize((new_width, new_height))
 
-        # Save temp file
         temp_path = "temp_resized_image.png"
         resized_image.save(temp_path)
 
-        # Analyze with agent
         agno_image = AgnoImage(filepath=temp_path)
         response = medical_agent.run(query, images=[agno_image])
         return response.content
@@ -87,12 +84,29 @@ def analyze_medical_image(image_path):
             os.remove("temp_resized_image.png")
 
 # -------------------------------------------------------------------
+# Extract Summary from Report
+# -------------------------------------------------------------------
+def extract_summary(report):
+    try:
+        sections = report.split("###")
+        for section in sections:
+            if "Diagnostic Assessment" in section:
+                lines = section.strip().split("\n")
+                for line in lines:
+                    line = line.strip()
+                    if line and not line.startswith("-"):
+                        return line
+    except Exception:
+        pass
+    return "AI-powered medical image analysis completed."
+
+# -------------------------------------------------------------------
 # Streamlit UI Setup
 # -------------------------------------------------------------------
 st.set_page_config(page_title="Medical Image Analysis", layout="centered")
 
 # -------------------------------------------------------------------
-# Custom CSS for Better UI/UX
+# Custom CSS
 # -------------------------------------------------------------------
 st.markdown("""
     <style>
@@ -136,15 +150,8 @@ st.markdown("""
             background-color: #ccc;
             border-radius: 10px;
         }
-    </style>
-""", unsafe_allow_html=True)
 
-
-
-st.markdown("""
-    <style>
-        /* Force white text on sidebar buttons with strong selectors */
-        section[data-testid="stSidebar"] button.css-1cpxqw2,  /* standard Streamlit button class */
+        section[data-testid="stSidebar"] button.css-1cpxqw2,
         section[data-testid="stSidebar"] button {
             color: white !important;
             background-color: #045d75 !important;
@@ -161,8 +168,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
-
 # -------------------------------------------------------------------
 # App Title and Introduction
 # -------------------------------------------------------------------
@@ -173,7 +178,7 @@ Upload a medical image (X-ray, MRI, CT, Ultrasound, etc.) and receive a structur
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# Sidebar Upload and Instructions
+# Sidebar Upload Section
 # -------------------------------------------------------------------
 st.sidebar.header("📤 Upload Medical Image")
 st.sidebar.markdown("""
@@ -188,49 +193,33 @@ uploaded_file = st.sidebar.file_uploader("", type=["jpg", "jpeg", "png", "bmp", 
 # -------------------------------------------------------------------
 # Process Upload and Display Results
 # -------------------------------------------------------------------
-if uploaded_file is not None:
-    st.image(uploaded_file, caption="🖼️ Uploaded Image", use_column_width=True)
+def handle_image(image_path, caption="Uploaded Image"):
+    st.image(image_path, caption=f"🖼️ {caption}", use_column_width=True)
     with st.spinner("🔍 Running analysis..."):
-        # Save uploaded image
-        file_extension = uploaded_file.type.split('/')[-1]
-        image_path = f"temp_image.{file_extension}"
-        with open(image_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-
-        # Analyze image
         report = analyze_medical_image(image_path)
-
-        # Display report
+        summary = extract_summary(report)
         st.subheader("📋 Analysis Report")
+        st.markdown(f"**🩺 Summary:** {summary}\n", unsafe_allow_html=True)
         st.markdown(report, unsafe_allow_html=True)
 
-        # Cleanup
-        if os.path.exists(image_path):
-            os.remove(image_path)
+if uploaded_file is not None:
+    file_extension = uploaded_file.type.split('/')[-1]
+    image_path = f"temp_image.{file_extension}"
+    with open(image_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    handle_image(image_path)
+    os.remove(image_path)
 else:
     st.warning("⚠️ Please upload a medical image to begin analysis.")
 
-
 # -------------------------------------------------------------------
-# Preloaded Test Images for Quick Demo
+# Preloaded Test Images
 # -------------------------------------------------------------------
 st.sidebar.markdown("### 🧪 Try with Test Images")
 
 col1, col2 = st.sidebar.columns(2)
 if col1.button("Test Image 1"):
-    test_image_path = "test_images/test1.png"
-    st.image(test_image_path, caption="🖼️ Test Image 1", use_column_width=True)
-    with st.spinner("🔍 Running analysis on Test Image 1..."):
-        report = analyze_medical_image(test_image_path)
-        st.subheader("📋 Analysis Report")
-        st.markdown(report, unsafe_allow_html=True)
+    handle_image("test_images/test1.png", caption="Test Image 1")
 
 if col2.button("Test Image 2"):
-    test_image_path = "test_images/test2.png"
-    st.image(test_image_path, caption="🖼️ Test Image 2", use_column_width=True)
-    with st.spinner("🔍 Running analysis on Test Image 2..."):
-        report = analyze_medical_image(test_image_path)
-        st.subheader("📋 Analysis Report")
-        st.markdown(report, unsafe_allow_html=True)
-
-
+    handle_image("test_images/test2.png", caption="Test Image 2")
