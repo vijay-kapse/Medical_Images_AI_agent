@@ -24,7 +24,7 @@ medical_agent = Agent(
 )
 
 # -------------------------------------------------------------------
-# Define the Analysis Query
+# Medical Analysis Prompt
 # -------------------------------------------------------------------
 query = """
 You are a highly skilled medical imaging expert with extensive knowledge in radiology and diagnostic imaging. Analyze the medical image and structure your response as follows:
@@ -63,16 +63,23 @@ Ensure a structured and medically accurate response using clear markdown formatt
 # -------------------------------------------------------------------
 def analyze_medical_image(image_path):
     try:
+        # Resize image
         image = PILImage.open(image_path)
-        aspect_ratio = image.width / image.height
-        resized = image.resize((500, int(500 / aspect_ratio)))
+        width, height = image.size
+        aspect_ratio = width / height
+        new_width = 500
+        new_height = int(new_width / aspect_ratio)
+        resized_image = image.resize((new_width, new_height))
 
-        temp_resized_path = "temp_resized_image.png"
-        resized.save(temp_resized_path)
+        # Save temp file
+        temp_path = "temp_resized_image.png"
+        resized_image.save(temp_path)
 
-        agno_image = AgnoImage(filepath=temp_resized_path)
+        # Analyze with agent
+        agno_image = AgnoImage(filepath=temp_path)
         response = medical_agent.run(query, images=[agno_image])
         return response.content
+
     except Exception as e:
         return f"⚠️ Analysis error: {e}"
     finally:
@@ -82,66 +89,100 @@ def analyze_medical_image(image_path):
 # -------------------------------------------------------------------
 # Streamlit UI Setup
 # -------------------------------------------------------------------
-st.set_page_config(page_title="Medical Image Analysis", layout="wide")
+st.set_page_config(page_title="Medical Image Analysis", layout="centered")
 
-# Custom CSS
+# -------------------------------------------------------------------
+# Custom CSS for Better UI/UX
+# -------------------------------------------------------------------
 st.markdown("""
     <style>
         html, body, [class*="css"] {
             font-family: 'Segoe UI', sans-serif;
             background-color: #f9fbfc;
         }
+
         .main {
             padding: 2rem;
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0px 4px 12px rgba(0,0,0,0.05);
         }
-        .stSidebar {
+
+        section[data-testid="stSidebar"] {
             background-color: #ecf0f3;
+            color: #1c1c1c;
         }
-        h1 {
-            color: #045d75;
+
+        section[data-testid="stSidebar"] .stTextInput,
+        section[data-testid="stSidebar"] .stFileUploader,
+        section[data-testid="stSidebar"] .stMarkdown {
+            color: #1c1c1c !important;
         }
+
         .stMarkdown {
             font-size: 1rem;
             line-height: 1.6;
         }
+
+        h1 {
+            color: #045d75;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 10px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Page Header
-st.title("🩺 AI-Powered Medical Image Analyzer")
+# -------------------------------------------------------------------
+# App Title and Introduction
+# -------------------------------------------------------------------
+st.title("🩺 Medical Image Analysis Tool 🔬")
 st.markdown("""
-Upload your **radiological image** below (e.g., X-ray, CT, MRI, Ultrasound) and receive a detailed, AI-generated diagnostic report.
-""")
+Welcome to the **Medical Image Analysis** tool powered by AI.<br>
+Upload a medical image (X-ray, MRI, CT, Ultrasound, etc.) and receive a structured, detailed diagnostic report with insights, potential findings, and references to medical research.
+""", unsafe_allow_html=True)
 
-# Sidebar
+# -------------------------------------------------------------------
+# Sidebar Upload and Instructions
+# -------------------------------------------------------------------
 st.sidebar.header("📤 Upload Medical Image")
-uploaded_file = st.sidebar.file_uploader("Supported formats: JPG, PNG, BMP, GIF", type=["jpg", "jpeg", "png", "bmp", "gif"])
+st.sidebar.markdown("""
+**Instructions:**
+- Supported formats: JPG, JPEG, PNG, BMP, GIF
+- Upload valid radiology images
+- Analysis starts automatically after upload
+""", unsafe_allow_html=True)
 
-# Image Handling & Analysis
+uploaded_file = st.sidebar.file_uploader("", type=["jpg", "jpeg", "png", "bmp", "gif"])
+
+# -------------------------------------------------------------------
+# Process Upload and Display Results
+# -------------------------------------------------------------------
 if uploaded_file is not None:
-    file_extension = uploaded_file.type.split("/")[-1]
-    temp_image_path = f"temp_uploaded_image.{file_extension}"
+    st.image(uploaded_file, caption="🖼️ Uploaded Image", use_column_width=True)
+    with st.spinner("🔍 Running analysis..."):
+        # Save uploaded image
+        file_extension = uploaded_file.type.split('/')[-1]
+        image_path = f"temp_image.{file_extension}"
+        with open(image_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-    with open(temp_image_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+        # Analyze image
+        report = analyze_medical_image(image_path)
 
-    # Layout: Show image on left, result on right
-    col1, col2 = st.columns([1, 2])
+        # Display report
+        st.subheader("📋 Analysis Report")
+        st.markdown(report, unsafe_allow_html=True)
 
-    with col1:
-        st.image(uploaded_file, caption="📸 Uploaded Image", use_column_width=True)
-
-    with col2:
-        with st.spinner("🧠 Analyzing image with medical AI..."):
-            report = analyze_medical_image(temp_image_path)
-            st.markdown("### 📋 Diagnostic Report")
-            st.markdown(report, unsafe_allow_html=True)
-
-    # Clean up uploaded temp file
-    if os.path.exists(temp_image_path):
-        os.remove(temp_image_path)
+        # Cleanup
+        if os.path.exists(image_path):
+            os.remove(image_path)
 else:
-    st.info("Upload a medical image from the sidebar to begin the analysis.")
+    st.warning("⚠️ Please upload a medical image to begin analysis.")
+
