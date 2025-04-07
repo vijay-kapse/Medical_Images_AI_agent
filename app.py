@@ -81,24 +81,18 @@ def analyze_medical_image(image_path):
 # Summary Extractor
 # -------------------------------------------------------------------
 def extract_summary(report):
+    import re
+
     try:
-        # Look for section heading
-        if "### 3. Diagnostic Assessment" in report:
-            section = report.split("### 3. Diagnostic Assessment")[1]
-        else:
-            section = report
+        diagnostic_section = report.split("### 3. Diagnostic Assessment")[1]
+    except IndexError:
+        diagnostic_section = report
 
-        # Search for 'Primary Diagnosis'
-        for line in section.strip().splitlines():
-            line_lower = line.strip().lower()
-            if line_lower.startswith("primary diagnosis"):
-                # Remove markdown styling and return just the diagnosis
-                return line.split(":", 1)[-1].strip()
-    except Exception:
-        pass
+    match = re.search(r"Primary Diagnosis\s*:\s*(.*)", diagnostic_section, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
 
-    return "Diagnosis not confidently detected – needs manual review."
-
+    return "No clear primary diagnosis found – needs manual review."
 
 # -------------------------------------------------------------------
 # UI Setup
@@ -165,7 +159,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# Title
+# Title & Instructions
 # -------------------------------------------------------------------
 st.title("🩺 Medical Image Analysis Tool 🔬")
 st.markdown("""
@@ -173,7 +167,7 @@ Upload a medical image (X-ray, MRI, CT, Ultrasound, etc.) and receive a structur
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# Sidebar
+# Sidebar Upload
 # -------------------------------------------------------------------
 st.sidebar.header("📤 Upload Medical Image")
 st.sidebar.markdown("""
@@ -186,7 +180,7 @@ st.sidebar.markdown("""
 uploaded_file = st.sidebar.file_uploader("", type=["jpg", "jpeg", "png", "bmp", "gif"])
 
 # -------------------------------------------------------------------
-# Handle Analysis + Display
+# Handle Image + Display Output
 # -------------------------------------------------------------------
 def handle_image(image_path, caption="Uploaded Image"):
     with st.spinner("🔍 Running analysis..."):
@@ -195,18 +189,30 @@ def handle_image(image_path, caption="Uploaded Image"):
 
         col1, col2 = st.columns([1, 2])
         with col1:
-            st.image(image_path, caption=f"🖼️ {caption}", use_column_width=True)
+            st.image(image_path, caption=f"🖼️ {caption}", use_container_width=True)
 
         with col2:
             st.subheader("📋 Report")
             st.markdown(
-                f"<div style='font-size: 1.1rem; padding: 0.5rem; background-color: #f0f8ff; border-left: 4px solid #0073b1; margin-bottom: 1rem;'><strong>🩺 Summary:</strong> {summary}</div>",
+                f"""
+                <div style="
+                    font-size: 1.1rem;
+                    background-color: #e8f0fe;
+                    padding: 1rem;
+                    border-left: 6px solid #2b7de9;
+                    border-radius: 8px;
+                    color: #1c1c1c;
+                    font-weight: 600;
+                ">
+                🩺 <strong>Summary:</strong> {summary}
+                </div>
+                """,
                 unsafe_allow_html=True
             )
             st.markdown(report, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# Main Upload Logic
+# Main Upload Handling
 # -------------------------------------------------------------------
 if uploaded_file is not None:
     file_extension = uploaded_file.type.split('/')[-1]
