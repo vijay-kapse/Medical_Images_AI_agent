@@ -143,21 +143,24 @@ st.markdown("""
 
 st.markdown("""
     <style>
-        /* Style sidebar buttons */
-        div[data-testid="stSidebar"] button {
+        /* Force white text on sidebar buttons with strong selectors */
+        section[data-testid="stSidebar"] button.css-1cpxqw2,  /* standard Streamlit button class */
+        section[data-testid="stSidebar"] button {
             color: white !important;
             background-color: #045d75 !important;
             border: none !important;
             border-radius: 5px;
             padding: 0.5rem 1rem;
+            font-weight: bold;
         }
 
-        div[data-testid="stSidebar"] button:hover {
+        section[data-testid="stSidebar"] button:hover {
             background-color: #033d52 !important;
             transition: 0.2s ease-in-out;
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 
 # -------------------------------------------------------------------
