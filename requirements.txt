@@ -2,4 +2,5 @@ streamlit
 Pillow
 agno
 google-genai
+ddgs
 duckduckgo-search
