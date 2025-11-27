@@ -26,27 +26,23 @@ os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 # Initialize Medical Agent (with defensive error handling)
 # -------------------------------------------------------------------
 def make_agent():
-    # Try a few common, stable model ids — adjust to what your account supports
     candidate_model_ids = [
-        "gemini-1.5-flash",       # common friendly name
-        "gemini-1.5",            # fallback
-        "gemini-1.5-flash-v1",   # other variants you might have seen
+        "gemini-pro-vision",
+        "gemini-1.0-pro-vision",
+        "gemini-1.5-pro", 
+        # "gemini-1.5-flash",  # will work AFTER billing enabled
     ]
     last_exc = None
     for mid in candidate_model_ids:
         try:
-            agent = Agent(
-                model=Gemini(id=mid),
-                markdown=True
-            )
+            agent = Agent(model=Gemini(id=mid), markdown=True)
             st.sidebar.success(f"Using model: {mid}")
             return agent
         except Exception as e:
-            # keep trying next model id, but remember exception
             last_exc = e
             st.sidebar.warning(f"Model {mid} init failed: {e}")
-    # If none worked, raise the last exception with context
-    raise RuntimeError("Failed to initialize Gemini Agent. Last error:\n" + (str(last_exc) or ""))
+    raise RuntimeError(f"Failed to initialize any model.\nLast error:\n{last_exc}")
+
 
 try:
     medical_agent = make_agent()
