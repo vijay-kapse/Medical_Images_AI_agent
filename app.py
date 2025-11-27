@@ -22,12 +22,41 @@ os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 # -------------------------------------------------------------------
 # Initialize Medical Agent
 # -------------------------------------------------------------------
-medical_agent = Agent(
-    # 🔴 CHANGE FROM: id="gemini-1.5-flash"
-    # 🟢 TO THIS (The explicit version ID):
-    model=Gemini(id="gemini-1.5-flash-001"), 
-    markdown=True
-)
+# -------------------------------------------------------------------
+# Initialize Medical Agent (with defensive error handling)
+# -------------------------------------------------------------------
+def make_agent():
+    # Try a few common, stable model ids — adjust to what your account supports
+    candidate_model_ids = [
+        "gemini-1.5-flash",       # common friendly name
+        "gemini-1.5",            # fallback
+        "gemini-1.5-flash-v1",   # other variants you might have seen
+    ]
+    last_exc = None
+    for mid in candidate_model_ids:
+        try:
+            agent = Agent(
+                model=Gemini(id=mid),
+                markdown=True
+            )
+            st.sidebar.success(f"Using model: {mid}")
+            return agent
+        except Exception as e:
+            # keep trying next model id, but remember exception
+            last_exc = e
+            st.sidebar.warning(f"Model {mid} init failed: {e}")
+    # If none worked, raise the last exception with context
+    raise RuntimeError("Failed to initialize Gemini Agent. Last error:\n" + (str(last_exc) or ""))
+
+try:
+    medical_agent = make_agent()
+except Exception as init_err:
+    # Show error in UI and keep app running
+    st.error("Could not initialize medical agent. See sidebar for details.")
+    st.sidebar.error(str(init_err))
+    # Save for analyze_medical_image to return an informative message
+    medical_agent = None
+
 
 # -------------------------------------------------------------------
 # Medical Analysis Prompt
