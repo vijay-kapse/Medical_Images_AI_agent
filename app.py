@@ -17,8 +17,16 @@ os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 # -------------------------------------------------------------------
 # Initialize Medical Agent
 # -------------------------------------------------------------------
+# medical_agent = Agent(
+#     model=Gemini(id="gemini-2.0-flash-exp"),
+#     tools=[DuckDuckGoTools()],
+#     markdown=True
+# )
+
+# Initialize Medical Agent
+# -------------------------------------------------------------------
 medical_agent = Agent(
-    model=Gemini(id="gemini-2.0-flash-exp"),
+    model=Gemini(id="gemini-1.5-flash"), # Switched to stable model
     tools=[DuckDuckGoTools()],
     markdown=True
 )
