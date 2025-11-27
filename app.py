@@ -19,8 +19,13 @@ os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 # -------------------------------------------------------------------
 # Switched to gemini-1.5-flash for stability
 # Removed DuckDuckGoTools to prevent 429 Rate Limit errors
+# -------------------------------------------------------------------
+# Initialize Medical Agent
+# -------------------------------------------------------------------
 medical_agent = Agent(
-    model=Gemini(id="gemini-1.5-flash"),
+    # 🔴 CHANGE FROM: id="gemini-1.5-flash"
+    # 🟢 TO THIS (The explicit version ID):
+    model=Gemini(id="gemini-1.5-flash-001"), 
     markdown=True
 )
 
